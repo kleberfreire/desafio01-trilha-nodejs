@@ -91,7 +91,19 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { username, idInUsers } = request;
+  const { id } = request.params;
+
+  const idTodoUser = users[idInUsers].todos.findIndex((todo) => todo.id === id);
+  if (idTodoUser < 0) {
+    return response.status(404).json({
+      error: "Mensagem do erro",
+    });
+  }
+
+  users[idInUsers].todos[idTodoUser].done = true;
+  const todoAltered = users[idInUsers].todos[idTodoUser];
+  return response.status(201).json(todoAltered);
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
