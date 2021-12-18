@@ -91,7 +91,7 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
-  const { username, idInUsers } = request;
+  const { idInUsers } = request;
   const { id } = request.params;
 
   const idTodoUser = users[idInUsers].todos.findIndex((todo) => todo.id === id);
@@ -107,7 +107,18 @@ app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { idInUsers } = request;
+  const { id } = request.params;
+
+  const idTodoUser = users[idInUsers].todos.findIndex((todo) => todo.id === id);
+  if (idTodoUser < 0) {
+    return response.status(404).json({
+      error: "Mensagem do erro",
+    });
+  }
+  const todoRemoved = users[idInUsers].todos[idTodoUser];
+  users[idInUsers].todos.splice(idTodoUser, 1);
+  return response.status(204).json(todoRemoved);
 });
 
 module.exports = app;
