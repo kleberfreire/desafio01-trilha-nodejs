@@ -16,11 +16,13 @@ function checksExistsUserAccount(request, response, next) {
     return user.username == username;
   });
   if (user) {
-    request.user = user;
+    request.username = user;
     request.idInUsers = indetifyIdUser(user);
     return next();
   }
-  return response.status(404).json({ message: "User does not exist" });
+  return response.status(404).json({
+    error: "Mensagem do erro",
+  });
 }
 
 function indetifyIdUser(user) {
@@ -30,35 +32,62 @@ function indetifyIdUser(user) {
 
 app.post("/users", (request, response) => {
   const { name, username } = request.body;
-  users.push({
+  console.log(
+    users.find((user) => {
+      return user.username === username;
+    })
+  );
+  if (
+    users.find((user) => {
+      return user.username === username;
+    })
+  ) {
+    return response.status(400).json({ error: "Mensagem do erro" });
+  }
+  const user = {
     id: uuidv4(),
     name: name,
     username: username,
     todos: [],
-  });
-  return response.json({ message: "user created" });
+  };
+  users.push(user);
+  return response.status(201).json(user);
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
-  const { user } = request;
-  return response.json(user.todos);
+  const { username } = request;
+  return response.status(201).json(username.todos);
 });
 
 app.post("/todos", checksExistsUserAccount, (request, response) => {
-  const { user, idInUsers } = request;
-  const { title, done, deadline } = request.body;
-  users[idInUsers].todos.push({
+  const { username, idInUsers } = request;
+  const { title, deadline } = request.body;
+  const dataTodo = {
     id: uuidv4(),
     title,
-    done,
+    done: false,
     deadline: new Date(deadline),
     created_at: new Date(),
-  });
-  return response.json({ message: "todo created on success" });
+  };
+  users[idInUsers].todos.push(dataTodo);
+  return response.status(201).json(dataTodo);
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { username, idInUsers } = request;
+  const { title, deadline } = request.body;
+  const { id } = request.params;
+
+  const idTodoUser = users[idInUsers].todos.findIndex((todo) => todo.id === id);
+  if (idTodoUser < 0) {
+    return response.status(404).json({
+      error: "Mensagem do erro",
+    });
+  }
+  users[idInUsers].todos[idTodoUser].title = title;
+  users[idInUsers].todos[idTodoUser].deadline = deadline;
+  const todoAltered = users[idInUsers].todos[idTodoUser];
+  return response.status(201).json(todoAltered);
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
